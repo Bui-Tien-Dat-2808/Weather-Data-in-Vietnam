@@ -1,10 +1,10 @@
-# 🌤️ Vietnam Weather Data Pipeline with Airflow
+# 1. 🌤️ Vietnam Weather Data Pipeline with Airflow
 
 Pipeline ETL thu thập **dữ liệu thời tiết của 63 tỉnh/thành Việt Nam** mỗi **3 giờ** từ **OpenWeather API**, sử dụng **Apache Airflow 2.10.2**, **Docker Compose**, **PostgreSQL** và **MinIO**.
 
 ---
 
-## 📌 Mục tiêu dự án
+## 1.1. 📌 Mục tiêu dự án
 - Thu thập dữ liệu thời tiết:
   - Nhiệt độ
   - Độ ẩm
@@ -21,7 +21,7 @@ Pipeline ETL thu thập **dữ liệu thời tiết của 63 tỉnh/thành Việ
 
 ---
 
-## 🧰 Công nghệ sử dụng
+## 1.2. 🧰 Công nghệ sử dụng
 | Công nghệ | Phiên bản |
 |---------|-----------|
 | Apache Airflow | 2.10.2 |
@@ -34,7 +34,8 @@ Pipeline ETL thu thập **dữ liệu thời tiết của 63 tỉnh/thành Việ
 
 ---
 
-## 📁 Cấu trúc thư mục
+## 1.3. 📁 Cấu trúc thư mục
+```
 Weather_Pipeline/
 │── dags/
 │── Weather_Pipeline.py
@@ -42,25 +43,23 @@ Weather_Pipeline/
 │── requirements.txt
 │── .env
 │── README.md
-
+```
 
 ---
 
-## ⚙️ Cài đặt & chạy dự án
+## 1.4. ⚙️ Cài đặt & chạy dự án
 
-1. **Clone repository**
+### 1.4.1. Build & start containers
 ```bash
-git clone https://github.com/datbui-280804/Weather_Pipeline.git
-cd Weather_Pipeline
-
-2. **Build & start containers**
 docker-compose up -d
-
-3. **Khởi tạo Airflow database & user**
+```
+### 1.4.2. Khởi tạo Airflow database & user
+```bash
 docker-compose run --rm airflow-init
+```
 
-4. **Truy cập các dịch vụ**
-Apache Airflow
+### 1.4.3. Truy cập các dịch vụ
+#### 1.4.3.1. Apache Airflow
 
 - URL: http://localhost:8080
 
@@ -68,7 +67,7 @@ Apache Airflow
 
 - Password: airflow
 
-MinIO
+#### 1.4.3.2. MinIO
 
 - URL: http://localhost:9001
 
@@ -76,8 +75,12 @@ MinIO
 
 - Secret Key: CHANGEME123
 
-5. **Thiết lập schedule**
+### 1.4.4. Thiết lập schedule
+```bash
 schedule_interval="0 */3 * * *"
+```
 
-6. **Dừng hệ thống**
+### 1.4.5. Dừng hệ thống
+```bash
 docker-compose down
+```
