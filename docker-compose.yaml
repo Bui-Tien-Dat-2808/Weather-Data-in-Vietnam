@@ -11,6 +11,7 @@ x-airflow-common: &airflow-common
   depends_on:
     - postgres
     - minio
+  restart: always
 
 services:
   postgres:
@@ -21,6 +22,7 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: always
 
   minio:
     image: minio/minio
@@ -32,6 +34,7 @@ services:
       - "9001:9001"
     volumes:
       - minio_data:/data
+    restart: always
 
   airflow-webserver:
     <<: *airflow-common
@@ -45,6 +48,7 @@ services:
 
   airflow-init:
     <<: *airflow-common
+    restart: no
     command: >
       bash -c "pip install -r /requirements.txt &&
                airflow db init &&
