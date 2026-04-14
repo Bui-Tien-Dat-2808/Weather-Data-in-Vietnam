@@ -1,0 +1,27 @@
+"""
+dbt configuration file for project settings
+"""
+
+# Profiles configuration would go in ~/.dbt/profiles.yml
+# Example:
+# weather_analytics:
+#   outputs:
+#     dev:
+#       type: postgres
+#       host: postgres
+#       port: 5432
+#       user: airflow
+#       pass: airflow
+#       dbname: weather_db
+#       schema: public
+#       threads: 4
+#     prod:
+#       type: postgres
+#       host: postgres
+#       port: 5432
+#       user: airflow
+#       pass: airflow
+#       dbname: weather_db
+#       schema: public
+#       threads: 4
+#   target: dev

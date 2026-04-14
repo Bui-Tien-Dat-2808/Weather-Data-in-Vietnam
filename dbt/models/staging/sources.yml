@@ -1,0 +1,32 @@
+-- Sources definition for dbt
+-- Maps raw data sources in PostgreSQL
+version: 2
+
+sources:
+  - name: weather_analytics
+    database: weather_db
+    schema: public
+    tables:
+      - name: weather_data
+        description: "Raw weather data from OpenWeather API"
+        columns:
+          - name: id
+            description: "Primary key"
+          - name: city
+            description: "City name"
+          - name: timestamp
+            description: "Measurement timestamp (UTC)"
+          - name: temperature
+            description: "Temperature in Celsius"
+          - name: humidity
+            description: "Humidity as percentage"
+          - name: wind_speed
+            description: "Wind speed in m/s"
+          - name: description
+            description: "Weather description"
+          - name: pressure
+            description: "Atmospheric pressure in hPa"
+          - name: clouds
+            description: "Cloud coverage percentage"
+          - name: created_at
+            description: "Record creation timestamp"

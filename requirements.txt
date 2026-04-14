@@ -1,6 +1,26 @@
-requests
-pandas
-sqlalchemy
-psycopg2-binary
-boto3
-python-dotenv
+# Core data processing
+requests>=2.31.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Database
+sqlalchemy>=1.4.36,<2.0
+psycopg2-binary>=2.9.9
+
+# Cloud storage
+boto3>=1.28.0
+minio>=7.1.0
+
+# Environment management
+python-dotenv>=1.0.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Logging and monitoring
+python-json-logger>=2.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
