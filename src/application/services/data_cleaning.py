@@ -121,6 +121,9 @@ class DataCleaningService:
         # Normalize city name: title case
         city_name = weather.city.strip().title()
 
+        if city_name == 'Turan':
+            city_name = 'Da Nang'
+
         # Round numeric values to reasonable precision
         temperature = round(weather.temperature, 2)
         wind_speed = round(weather.wind_speed, 2)
@@ -146,6 +149,10 @@ class DataCleaningService:
         Returns:
             pandas DataFrame
         """
+        if not weather_list:
+            logger.error("No weather data available to convert to DataFrame.")
+            return pd.DataFrame(columns=['city', 'timestamp', 'temperature', 'humidity', 'wind_speed', 'description', 'pressure', 'clouds'])
+        
         data = [w.to_dict() for w in weather_list]
         df = pd.DataFrame(data)
 

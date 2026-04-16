@@ -8,8 +8,8 @@ import requests
 from requests.exceptions import RequestException, Timeout, ConnectionError
 
 from src.shared.config.settings import settings
+from src.shared.config.mappings import PROVINCE_COORDINATES
 from src.domain.entities.weather import WeatherData
-
 
 logger = logging.getLogger(__name__)
 
@@ -43,26 +43,33 @@ class OpenWeatherAPIClient:
 
     def fetch_weather(self, city: str, country: str = 'vn') -> Optional[Dict[str, Any]]:
         """
-        Fetch weather data for a city.
+        Fetch weather data for a province by its coordinates.
 
         Args:
-            city: City name (with spaces replaced by underscores)
-            country: Country code (default: 'vn' for Vietnam)
+            city: Province name (with spaces replaced by underscores, e.g., "Ha_Noi")
+            country: Country code (ignored, as we use coordinates)
 
         Returns:
             Raw API response as dictionary, or None if request fails
         """
-        # Replace underscores with spaces
-        city_name = city.replace("_", " ")
+        # Replace underscores with spaces to get the province name for lookup
+        province_name = city.replace("_", " ")
+
+        # Get coordinates from the mapping
+        coords = PROVINCE_COORDINATES.get(province_name)
+        if not coords:
+            logger.warning(f"Coordinates not found for province: {province_name}. Skipping.")
+            return None
 
         try:
             params = {
-                'q': f"{city_name},{country}",
+                'lat': coords['lat'],
+                'lon': coords['lon'],
                 'appid': self.api_key,
                 'units': 'metric'
             }
 
-            logger.info(f"Fetching weather data for {city_name}, {country}")
+            logger.info(f"Fetching weather data for {province_name} at lat={coords['lat']}, lon={coords['lon']}")
             response = requests.get(
                 self.base_url,
                 params=params,
@@ -75,23 +82,26 @@ class OpenWeatherAPIClient:
             # Check API response code
             if data.get('cod') != 200:
                 error_msg = data.get('message', 'Unknown error')
-                logger.warning(f"API error for {city_name}: {error_msg}")
+                logger.warning(f"API error for {province_name}: {error_msg}")
                 return None
 
-            logger.info(f"Successfully fetched weather data for {city_name}")
+            # Augment the response with the name we requested to avoid naming issues (e.g., Turan for Da Nang)
+            data['requested_city_name'] = city
+
+            logger.info(f"Successfully fetched weather data for {province_name}")
             return data
 
         except Timeout:
-            logger.error(f"Request timeout for {city_name}")
+            logger.error(f"Request timeout for {province_name}")
             return None
         except ConnectionError as e:
-            logger.error(f"Connection error for {city_name}: {e}")
+            logger.error(f"Connection error for {province_name}: {e}")
             return None
         except RequestException as e:
-            logger.error(f"Request error for {city_name}: {e}")
+            logger.error(f"Request error for {province_name}: {e}")
             return None
         except ValueError as e:
-            logger.error(f"JSON parsing error for {city_name}: {e}")
+            logger.error(f"JSON parsing error for {province_name}: {e}")
             return None
 
     def fetch_multiple_cities(self, cities: List[str]) -> List[Dict[str, Any]]:
@@ -127,8 +137,11 @@ class OpenWeatherAPIClient:
         try:
             from datetime import datetime
 
+            # Prioritize the name we requested, fall back to the API's name
+            city_name = api_response.get('requested_city_name', api_response['name']).replace("_", " ")
+
             return WeatherData(
-                city=api_response['name'],
+                city=city_name,
                 timestamp=datetime.utcfromtimestamp(api_response['dt']),
                 temperature=api_response['main']['temp'],
                 humidity=api_response['main']['humidity'],
