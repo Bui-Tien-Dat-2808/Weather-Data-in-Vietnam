@@ -1,7 +1,3 @@
-"""
-Centralized logging configuration for the Weather Data Pipeline.
-Provides consistent logging across all modules.
-"""
 import logging
 import sys
 from typing import Optional
@@ -9,11 +5,6 @@ from src.shared.config.settings import settings
 
 
 class LoggerFactory:
-    """
-    Factory for creating configured logger instances.
-    Ensures consistent logging format and level across the application.
-    """
-
     _configured: bool = False
 
     @classmethod
@@ -45,15 +36,6 @@ class LoggerFactory:
 
     @classmethod
     def get_logger(cls, name: Optional[str] = None) -> logging.Logger:
-        """
-        Get a configured logger instance.
-
-        Args:
-            name: Logger name (typically __name__)
-
-        Returns:
-            Configured logger instance
-        """
         cls.configure_root_logger()
         return logging.getLogger(name)
 

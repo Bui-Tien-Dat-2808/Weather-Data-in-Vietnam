@@ -1,21 +1,16 @@
-"""
-Refactored Airflow DAG for weather data pipeline.
-Uses clean architecture with business logic separated from orchestration.
-"""
 import sys
-from pathlib import Path
-
-# Add parent directory to path to enable imports from src
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from src.interfaces.airflow.operators import PipelineOperations
 
-# Default arguments for DAG
+
 default_args = {
     'owner': 'data-engineer',
     'depends_on_past': False,
@@ -26,17 +21,15 @@ default_args = {
     'email_on_retry': False,
 }
 
-# DAG definition
+
 with DAG(
     dag_id='weather_data_pipeline',
     default_args=default_args,
-    description='End-to-End Weather Data Pipeline: Bronze → Silver → Gold',
-    schedule_interval='0 */3 * * *',  # Every 3 hours
+    description='End-to-end weather data pipeline: raw data, cleaning, warehouse',
+    schedule_interval='0 */3 * * *',
     catchup=False,
-    tags=['weather', 'production', 'medallion-architecture'],
+    tags=['weather', 'production', 'data-pipeline'],
 ) as dag:
-
-    # Task 1: Fetch weather data from API (Bronze Layer)
     fetch_weather_task = PythonOperator(
         task_id='fetch_weather',
         python_callable=PipelineOperations.fetch_weather_data,
@@ -45,16 +38,14 @@ with DAG(
         retry_delay=timedelta(minutes=5),
     )
 
-    # Task 2: Transform to Silver layer (clean and validate)
-    transform_to_silver_task = PythonOperator(
-        task_id='transform_to_silver',
-        python_callable=PipelineOperations.transform_to_silver,
+    clean_weather_data_task = PythonOperator(
+        task_id='clean_weather_data',
+        python_callable=PipelineOperations.clean_weather_data,
         provide_context=True,
         retries=1,
         retry_delay=timedelta(minutes=5),
     )
 
-    # Task 3: Save to PostgreSQL staging table
     save_to_postgres_task = PythonOperator(
         task_id='save_to_postgres',
         python_callable=PipelineOperations.save_to_postgres,
@@ -63,7 +54,6 @@ with DAG(
         retry_delay=timedelta(minutes=5),
     )
 
-    # Task 4: Trigger dbt models (Gold Layer)
     trigger_dbt_task = PythonOperator(
         task_id='trigger_dbt',
         python_callable=PipelineOperations.trigger_dbt,
@@ -72,5 +62,4 @@ with DAG(
         retry_delay=timedelta(minutes=5),
     )
 
-    # Define task dependencies
-    fetch_weather_task >> transform_to_silver_task >> save_to_postgres_task >> trigger_dbt_task
+    fetch_weather_task >> clean_weather_data_task >> save_to_postgres_task >> trigger_dbt_task

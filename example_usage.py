@@ -1,6 +1,3 @@
-"""
-Example of how to use the Weather Pipeline programmatically
-"""
 import logging
 from src.application.services.orchestration import WeatherPipelineOrchestrator
 from src.shared.config.settings import settings
@@ -10,8 +7,6 @@ logger = get_logger(__name__)
 
 
 def main():
-    """Run the complete weather pipeline."""
-    
     logger.info("Starting Weather Data Pipeline")
     logger.info(f"Processing {len(settings.CITIES)} cities")
     

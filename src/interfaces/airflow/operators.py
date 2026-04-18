@@ -1,8 +1,3 @@
-"""
-Airflow operator functions for the weather data pipeline.
-These functions are called by Airflow tasks and delegate to application services.
-"""
-import logging
 from typing import Optional
 
 from src.application.services.orchestration import WeatherPipelineOrchestrator
@@ -14,139 +9,94 @@ logger = get_logger(__name__)
 
 
 class PipelineOperations:
-    """
-    Encapsulates pipeline operations for use with Airflow.
-    Each method represents a logical task in the DAG.
-    """
+    """Airflow task callables for the pipeline."""
 
     @staticmethod
     def fetch_weather_data(**context) -> Optional[str]:
-        """
-        Airflow task: Fetch weather data from API and save to Bronze layer.
-
-        Args:
-            context: Airflow context (XCom communication)
-
-        Returns:
-            Path to saved raw data in MinIO
-        """
-        logger.info("Task: Fetch weather data from OpenWeather API")
+        """Fetch weather data from the API and store raw payloads in MinIO."""
+        logger.info("Task: fetch raw weather data")
 
         try:
             orchestrator = WeatherPipelineOrchestrator()
-            bronze_path = orchestrator.fetch_and_save_bronze(settings.CITIES)
+            raw_data_path = orchestrator.fetch_and_save_raw_data(settings.CITIES)
 
-            if not bronze_path:
-                raise Exception("Failed to fetch or save bronze layer data")
+            if not raw_data_path:
+                raise RuntimeError("Failed to fetch or save raw weather data")
 
-            # Push path to XCom for next task
-            context['ti'].xcom_push(key='bronze_path', value=bronze_path)
-
-            logger.info(f"Fetch task completed. Bronze path: {bronze_path}")
-            return bronze_path
-
-        except Exception as e:
-            logger.error(f"Fetch task failed: {e}")
+            context['ti'].xcom_push(key='raw_data_path', value=raw_data_path)
+            logger.info(f"Fetch task completed. Raw data path: {raw_data_path}")
+            return raw_data_path
+        except Exception as exc:
+            logger.error(f"Fetch task failed: {exc}")
             raise
 
     @staticmethod
-    def transform_to_silver(**context) -> Optional[str]:
-        """
-        Airflow task: Transform Bronze data to Silver layer (clean and validate).
-
-        Args:
-            context: Airflow context (XCom communication)
-
-        Returns:
-            Path to cleaned data in MinIO
-        """
-        logger.info("Task: Transform data to Silver layer")
+    def clean_weather_data(**context) -> Optional[str]:
+        """Clean raw weather data and store the result in MinIO."""
+        logger.info("Task: clean weather data")
 
         try:
-            # Get bronze path from previous task
-            bronze_path = context['ti'].xcom_pull(
+            raw_data_path = context['ti'].xcom_pull(
                 task_ids='fetch_weather',
-                key='bronze_path'
+                key='raw_data_path',
             )
 
-            if not bronze_path:
-                raise Exception("Bronze path not found in XCom")
+            if not raw_data_path:
+                raise RuntimeError("Raw data path not found in XCom")
 
             orchestrator = WeatherPipelineOrchestrator()
-            silver_path = orchestrator.transform_to_silver(bronze_path)
+            clean_data_path = orchestrator.clean_weather_data(raw_data_path)
 
-            if not silver_path:
-                raise Exception("Failed to transform to silver layer")
+            if not clean_data_path:
+                raise RuntimeError("Failed to clean weather data")
 
-            # Push path to XCom for next task
-            context['ti'].xcom_push(key='silver_path', value=silver_path)
-
-            logger.info(f"Transform task completed. Silver path: {silver_path}")
-            return silver_path
-
-        except Exception as e:
-            logger.error(f"Transform task failed: {e}")
+            context['ti'].xcom_push(key='clean_data_path', value=clean_data_path)
+            logger.info(f"Clean task completed. Clean data path: {clean_data_path}")
+            return clean_data_path
+        except Exception as exc:
+            logger.error(f"Clean task failed: {exc}")
             raise
 
     @staticmethod
     def save_to_postgres(**context) -> bool:
-        """
-        Airflow task: Save cleaned data to PostgreSQL staging table.
-
-        Args:
-            context: Airflow context (XCom communication)
-
-        Returns:
-            True if successful
-        """
-        logger.info("Task: Save data to PostgreSQL")
+        """Save clean data from MinIO into PostgreSQL staging."""
+        logger.info("Task: save clean data to PostgreSQL")
 
         try:
-            # Get silver path from previous task
-            silver_path = context['ti'].xcom_pull(
-                task_ids='transform_to_silver',
-                key='silver_path'
+            clean_data_path = context['ti'].xcom_pull(
+                task_ids='clean_weather_data',
+                key='clean_data_path',
             )
 
-            if not silver_path:
-                raise Exception("Silver path not found in XCom")
+            if not clean_data_path:
+                raise RuntimeError("Clean data path not found in XCom")
 
             orchestrator = WeatherPipelineOrchestrator()
-            success = orchestrator.save_to_postgres_staging(silver_path)
+            success = orchestrator.save_to_postgres_staging(clean_data_path)
 
             if not success:
-                raise Exception("Failed to save to PostgreSQL")
+                raise RuntimeError("Failed to save to PostgreSQL")
 
             logger.info("Save task completed")
             return success
-
-        except Exception as e:
-            logger.error(f"Save task failed: {e}")
+        except Exception as exc:
+            logger.error(f"Save task failed: {exc}")
             raise
 
     @staticmethod
     def trigger_dbt(**context) -> bool:
-        """
-        Airflow task: Trigger dbt to build Gold layer models.
-
-        Args:
-            context: Airflow context
-
-        Returns:
-            True if successful
-        """
-        logger.info("Task: Trigger dbt models")
+        """Trigger dbt to build analytics models."""
+        logger.info("Task: trigger dbt models")
 
         try:
             orchestrator = WeatherPipelineOrchestrator()
             success = orchestrator.trigger_dbt_models()
 
             if not success:
-                raise Exception("Failed to trigger dbt")
+                raise RuntimeError("Failed to trigger dbt")
 
             logger.info("dbt trigger task completed")
             return success
-
-        except Exception as e:
-            logger.error(f"dbt trigger task failed: {e}")
+        except Exception as exc:
+            logger.error(f"dbt trigger task failed: {exc}")
             raise

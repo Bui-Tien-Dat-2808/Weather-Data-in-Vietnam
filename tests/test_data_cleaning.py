@@ -1,6 +1,3 @@
-"""
-Unit tests for data cleaning service
-"""
 import pytest
 from datetime import datetime
 from src.domain.entities.weather import WeatherData
@@ -9,7 +6,6 @@ from src.application.services.data_cleaning import DataCleaningService
 
 @pytest.fixture
 def cleaning_service():
-    """Create a cleaning service instance for testing."""
     return DataCleaningService()
 
 
