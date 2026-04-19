@@ -74,6 +74,8 @@ MINIO_GOLD_PREFIX=gold
 
 ## Chạy project
 
+- Lần đầu chạy thì nên build airflow-init trước để tạo database và bucket, những lần sau chỉ cần `docker compose up -d` là được.
+
 ```bash
 docker compose up -d
 docker compose run --rm airflow-init
@@ -137,6 +139,6 @@ docker compose run --rm airflow pytest tests/
 
 ## Ghi chú
 
-- Task Airflow làm sạch hiện tại là `clean_weather_data`
-- Superset chạy ở cổng `8088`, không dùng cổng PostgreSQL
-- PostgreSQL publish ra host ở `5432`
+- Nếu port `5432` bị chiếm, có thể đổi sang `5433` và cập nhật trong `.env` và `docker-compose.yaml` hoặc có thể tắt service `postgres` và chạy lại.
+- Đảm bảo đã cài `mc` trong container MinIO để kiểm tra file.
+- dbt profiles.yml cần cấu hình đúng để kết nối PostgreSQL.
