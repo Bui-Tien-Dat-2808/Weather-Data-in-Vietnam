@@ -1,8 +1,10 @@
 # Weather Data Pipeline
 
-Pipeline thời tiết end-to-end cho dữ liệu các tỉnh/thành Việt Nam, sử dụng Airflow để orchestration, MinIO làm data lake, PostgreSQL làm staging warehouse, dbt cho transformation và Superset để trực quan hóa.
+Pipeline thời tiết end-to-end cho dữ liệu các tỉnh/thành Việt Nam, sử dụng Airflow để orchestration, MinIO làm data lake, PostgreSQL làm staging warehouse, dbt cho transformation và Power BI để trực quan hóa.
 
 ## Kiến trúc
+
+![Architecture Diagram](images/architecture.png)
 
 Luồng xử lý hiện tại:
 
@@ -11,16 +13,16 @@ Luồng xử lý hiện tại:
 3. `save_to_postgres`: nạp dữ liệu sạch vào bảng staging `weather_data`
 4. `trigger_dbt`: chạy lớp transform analytics sang `dim_city` và `fact_weather`
 
-## Stack
+## Tech Stack
 
 | Thành phần | Công nghệ | Vai trò |
 |-----------|-----------|---------|
 | Orchestration | Apache Airflow 2.10.2 | Điều phối DAG |
-| Data lake | MinIO | Lưu `raw_data` và `clean_data` |
+| Data Storage | MinIO | Lưu `raw_data` và `clean_data` |
 | Warehouse | PostgreSQL 15 | Lưu staging và data mart |
 | Transformation | dbt 1.5 | Xây dựng models |
-| BI | Superset | Dashboard và query |
-| Ngôn ngữ | Python 3.11 | Xử lý pipeline |
+| Visualization | Power BI | Dashboard và Visualization |
+| Program Language | Python 3.11 | Xử lý pipeline |
 
 ## Cấu trúc thư mục
 
@@ -39,6 +41,7 @@ Weather_Pipeline/
 ├── docker/
 │   └── superset/
 │       └── Dockerfile
+├── images/
 ├── src/
 │   ├── application/
 │   ├── domain/
@@ -85,7 +88,6 @@ Các service:
 
 - Airflow: `http://localhost:8080`
 - MinIO Console: `http://localhost:9001`
-- Superset: `http://localhost:8088`
 - PostgreSQL từ host: `localhost:5432`
 
 ## Kết nối PostgreSQL
@@ -136,6 +138,24 @@ docker compose exec dbt dbt run --profiles-dir /root/.dbt
 ```bash
 docker compose run --rm airflow pytest tests/
 ```
+
+## Power BI Dashboard
+
+### Temperature Dashboard
+
+![Temperature Dashboard](images/image.png)
+
+### Humidity, wind speed, pressure dashboard
+
+![Humidity, wind speed, pressure dashboard](images/image-4.png)
+
+### Weather State in each province
+
+![Weather State in each province](images/image-2.png)
+
+### Heatmap in Vietnam
+
+![Heatmap in Vietnam](images/image-3.png)
 
 ## Ghi chú
 

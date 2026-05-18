@@ -74,27 +74,6 @@ services:
     restart: on-failure
     command: ["dbt", "--version"]
 
-  superset:
-    build:
-      context: .
-      dockerfile: docker/superset/Dockerfile
-    image: weather-pipeline-superset:local
-    env_file:
-      - .env
-    environment:
-      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
-    ports:
-      - "8088:8088"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: always
-    command: >
-      bash -c "superset db upgrade &&
-               (superset fab create-admin --username admin --firstname Admin --lastname User --email admin@example.com --password admin || true) &&
-               superset init &&
-               superset run -h 0.0.0.0 -p 8088 --with-threads"
-
 volumes:
   postgres_data:
   minio_data:
