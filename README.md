@@ -1,30 +1,30 @@
 # Weather Data Pipeline
 
-Pipeline thời tiết end-to-end cho dữ liệu các tỉnh/thành Việt Nam, sử dụng Airflow để orchestration, MinIO làm data lake, PostgreSQL làm staging warehouse, dbt cho transformation và Power BI để trực quan hóa.
+An end-to-end weather data pipeline for provinces and cities in Vietnam, using Airflow for orchestration, MinIO as the data lake, PostgreSQL as the staging warehouse, dbt for transformations, and Power BI for visualization.
 
-## Kiến trúc
+## Architecture
 
 ![Architecture Diagram](images/architecture.png)
 
-Luồng xử lý hiện tại:
+Current processing flow:
 
-1. `fetch_weather`: gọi OpenWeather theo tọa độ tỉnh và lưu raw payload vào `s3://weather-data/raw_data/`
-2. `clean_weather_data`: làm sạch, chuẩn hóa dữ liệu và lưu parquet vào `s3://weather-data/clean_data/`
-3. `save_to_postgres`: nạp dữ liệu sạch vào bảng staging `weather_data`
-4. `trigger_dbt`: chạy lớp transform analytics sang `dim_city` và `fact_weather`
+1. `fetch_weather`: calls OpenWeather by province/city coordinates and stores the raw payload in `s3://weather-data/raw_data/`
+2. `clean_weather_data`: cleans and standardizes the data, then stores parquet files in `s3://weather-data/clean_data/`
+3. `save_to_postgres`: loads the cleaned data into the `weather_data` staging table
+4. `trigger_dbt`: runs the analytics transformation layer to build `dim_city` and `fact_weather`
 
 ## Tech Stack
 
-| Thành phần | Công nghệ | Vai trò |
-|-----------|-----------|---------|
-| Orchestration | Apache Airflow 2.10.2 | Điều phối DAG |
-| Data Storage | MinIO | Lưu `raw_data` và `clean_data` |
-| Warehouse | PostgreSQL 15 | Lưu staging và data mart |
-| Transformation | dbt 1.5 | Xây dựng models |
-| Visualization | Power BI | Dashboard và Visualization |
-| Program Language | Python 3.11 | Xử lý pipeline |
+| Component | Technology | Role |
+|-----------|-----------|------|
+| Orchestration | Apache Airflow 2.10.2 | DAG orchestration |
+| Data Storage | MinIO | Stores `raw_data` and `clean_data` |
+| Warehouse | PostgreSQL 15 | Stores staging and data mart tables |
+| Transformation | dbt 1.5 | Builds transformation models |
+| Visualization | Power BI | Dashboards and visualization |
+| Programming Language | Python 3.11 | Pipeline processing |
 
-## Cấu trúc thư mục
+## Project Structure
 
 ```text
 Weather_Pipeline/
@@ -55,9 +55,9 @@ Weather_Pipeline/
 └── setup.sh
 ```
 
-## Cấu hình chính
+## Main Configuration
 
-Các biến quan trọng trong `.env`:
+Important variables in `.env`:
 
 ```env
 OPENWEATHER_API_KEY=your_api_key
@@ -75,24 +75,24 @@ MINIO_CLEAN_PREFIX=clean_data
 MINIO_GOLD_PREFIX=gold
 ```
 
-## Chạy project
+## Run the Project
 
-- Lần đầu chạy thì nên build airflow-init trước để tạo database và bucket, những lần sau chỉ cần `docker compose up -d` là được.
+- On the first run, it is recommended to initialize `airflow-init` first so the database and bucket are created. On later runs, `docker compose up -d` is usually enough.
 
 ```bash
 docker compose up -d
 docker compose run --rm airflow-init
 ```
 
-Các service:
+Services:
 
 - Airflow: `http://localhost:8080`
 - MinIO Console: `http://localhost:9001`
-- PostgreSQL từ host: `localhost:5432`
+- PostgreSQL from host: `localhost:5432`
 
-## Kết nối PostgreSQL
+## PostgreSQL Connection
 
-Từ máy host:
+From the host machine:
 
 ```text
 Host: localhost
@@ -102,13 +102,13 @@ Username: airflow
 Password: airflow
 ```
 
-Từ container nội bộ:
+From internal containers:
 
 ```text
 postgresql+psycopg2://airflow:airflow@postgres:5432/weather_db
 ```
 
-## MinIO layout
+## MinIO Layout
 
 ```text
 weather-data/
@@ -116,13 +116,13 @@ weather-data/
 └── clean_data/
 ```
 
-## dbt models
+## dbt Models
 
-- `stg_weather_data`: staging view từ `weather_data`
-- `dim_city`: dimension thành phố/tỉnh
-- `fact_weather`: fact thời tiết
+- `stg_weather_data`: staging view built from `weather_data`
+- `dim_city`: city/province dimension table
+- `fact_weather`: weather fact table
 
-## Lệnh hữu ích
+## Useful Commands
 
 ```bash
 docker compose logs airflow-scheduler
@@ -133,7 +133,7 @@ docker compose exec minio mc ls minio/weather-data/clean_data
 docker compose exec dbt dbt run --profiles-dir /root/.dbt
 ```
 
-## Test
+## Tests
 
 ```bash
 docker compose run --rm airflow pytest tests/
@@ -145,11 +145,11 @@ docker compose run --rm airflow pytest tests/
 
 ![Temperature Dashboard](images/image.png)
 
-### Humidity, wind speed, pressure dashboard
+### Humidity, Wind Speed, and Pressure Dashboard
 
 ![Humidity, wind speed, pressure dashboard](images/image-4.png)
 
-### Weather State in each province
+### Weather State in Each Province
 
 ![Weather State in each province](images/image-2.png)
 
@@ -157,8 +157,8 @@ docker compose run --rm airflow pytest tests/
 
 ![Heatmap in Vietnam](images/image-3.png)
 
-## Ghi chú
+## Notes
 
-- Nếu port `5432` bị chiếm, có thể đổi sang `5433` và cập nhật trong `.env` và `docker-compose.yaml` hoặc có thể tắt service `postgres` và chạy lại.
-- Đảm bảo đã cài `mc` trong container MinIO để kiểm tra file.
-- dbt profiles.yml cần cấu hình đúng để kết nối PostgreSQL.
+- If port `5432` is already in use, you can switch to `5433` and update `.env` and `docker-compose.yaml`, or stop the conflicting `postgres` service and run again.
+- Make sure `mc` is installed in the MinIO container if you want to inspect stored files.
+- `dbt/profiles.yml` must be configured correctly to connect to PostgreSQL.
