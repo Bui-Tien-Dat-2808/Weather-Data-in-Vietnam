@@ -8,6 +8,7 @@ x-airflow-common: &airflow-common
   volumes:
     - ./dags:/opt/airflow/dags
     - ./src:/opt/airflow/src
+    - ./tests:/opt/airflow/tests
     - ./requirements.txt:/requirements.txt
     - ./.env:/opt/airflow/.env
   depends_on:
